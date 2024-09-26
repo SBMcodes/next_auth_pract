@@ -1,6 +1,31 @@
-import GitHub from "next-auth/providers/github";
 import type { NextAuthConfig } from "next-auth";
+import Credentials from "next-auth/providers/credentials";
+import { LoginSchema } from "./schemas";
+import { getUserByEmail } from "./data/user";
+import bcrypt from "bcryptjs";
 
-// For edge compatibility we are using this
+export default {
+  providers: [
+    Credentials({
+      async authorize(credentials) {
+        // Authorization logic
+        const validatedFields = LoginSchema.safeParse(credentials);
 
-export default { providers: [GitHub] } satisfies NextAuthConfig;
+        if (validatedFields.success) {
+          const { email, password } = validatedFields.data;
+          const user = await getUserByEmail(email);
+          if (!user || !user.password) {
+            return null;
+          }
+
+          const isPasswordMatch = await bcrypt.compare(password, user.password);
+
+          if (isPasswordMatch) {
+            return user;
+          }
+        }
+        return null;
+      },
+    }),
+  ],
+} satisfies NextAuthConfig;
