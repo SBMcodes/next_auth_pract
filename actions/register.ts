@@ -2,6 +2,8 @@
 
 import { RegisterSchema } from "@/schemas";
 import { z } from "zod";
+import bcrypt from "bcrypt";
+import { db } from "@/lib/db";
 
 export const register = async (values: z.infer<typeof RegisterSchema>) => {
   const validateFields = RegisterSchema.safeParse(values);
@@ -9,5 +11,28 @@ export const register = async (values: z.infer<typeof RegisterSchema>) => {
     return { error: "Invalid Fields" };
   }
 
-  return { success: "Email sent!" };
+  const { name, email, password } = validateFields.data;
+  const hashedPassword = await bcrypt.hash(password, 10);
+
+  const exisitingUser = await db.user.findUnique({
+    where: {
+      email,
+    },
+  });
+
+  if (exisitingUser) {
+    return { error: "Email already in use!" };
+  }
+
+  await db.user.create({
+    data: {
+      name,
+      email,
+      password: hashedPassword,
+    },
+  });
+
+  // TODO: Send Verification OTP to email
+
+  return { success: "User created successfully!" };
 };
