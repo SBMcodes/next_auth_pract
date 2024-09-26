@@ -8,6 +8,7 @@ export default {
   providers: [
     Credentials({
       async authorize(credentials) {
+        console.log("Auth.config.ts");
         // Authorization logic
         const validatedFields = LoginSchema.safeParse(credentials);
 
