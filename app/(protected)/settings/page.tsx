@@ -12,7 +12,10 @@ const SettingsPage = async () => {
           await signOut({ redirectTo: "/auth/login" });
         }}
       >
-        <button className="bg-red-500" type="submit">
+        <button
+          className="bg-red-500 text-white rounded-sm px-2 py-2 m-2 text-sm active:bg-red-500/90 transition select-none"
+          type="submit"
+        >
           Sign Out
         </button>
       </form>
