@@ -27,6 +27,10 @@ declare module "next-auth/jwt" {
 
 export const { auth, handlers, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(db),
+  pages: {
+    signIn: "/auth/login",
+    error: "/auth/error",
+  },
   // https://next-auth.js.org/configuration/events
   events: {
     async linkAccount({ user }) {
