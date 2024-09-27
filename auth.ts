@@ -27,6 +27,15 @@ declare module "next-auth/jwt" {
 
 export const { auth, handlers, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(db),
+  // https://next-auth.js.org/configuration/events
+  events: {
+    async linkAccount({ user }) {
+      await db.user.update({
+        where: { id: user.id },
+        data: { emailVerified: new Date() },
+      });
+    },
+  },
   callbacks: {
     async signIn({ user }) {
       if (!user || !user.id) {
