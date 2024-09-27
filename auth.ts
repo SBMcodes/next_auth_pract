@@ -3,22 +3,65 @@
 // SECRET
 // https://authjs.dev/guides/environment-variables
 
-import NextAuth from "next-auth";
+import NextAuth, { type DefaultSession } from "next-auth";
+import { JWT } from "next-auth/jwt";
 import authConfig from "./auth.config";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { db } from "./lib/db";
+import { getUserById } from "./data/user";
+import { UserRole } from "@prisma/client";
+
+declare module "next-auth" {
+  interface Session {
+    user: {
+      role: UserRole;
+    };
+  }
+}
+
+declare module "next-auth/jwt" {
+  interface JWT {
+    role: UserRole;
+  }
+}
 
 export const { auth, handlers, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(db),
   callbacks: {
+    async signIn({ user }) {
+      if (!user || !user.id) {
+        return false;
+      }
+      // const existingUser = await getUserById(user.id);
+      // if (!existingUser || !existingUser.emailVerified) {
+      //   return false;
+      // }
+
+      return true;
+    },
     async session({ session, token }) {
-      if (token.sub && session.user) {
-        session.user.id = token.sub;
+      if (session.user) {
+        if (token.sub) {
+          session.user.id = token.sub;
+        }
+        if (token.role) {
+          session.user.role = token.role;
+        }
       }
       return session;
     },
     async jwt({ token }) {
       console.log("JWT");
+      if (!token.sub) {
+        return token;
+      }
+      const existingUser = await getUserById(token.sub);
+      if (!existingUser) {
+        return token;
+      }
+
+      token.role = existingUser.role;
+
       return token;
     },
   },
